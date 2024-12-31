@@ -1,0 +1,42 @@
+{% extends 'basic_generic.html' %}
+{% load static %}
+{% block content %}
+    <main>
+        <section>
+            <h2>Connect and Empower: Loans Made Simple</h2>
+            <p>Our platform provides a secure and efficient way to apply for loans, track applications, and manage approvals. Whether you're looking to secure funding for your goals or seeking to invest in a reliable lending platform, we are here to help.</p>
+        </section>
+           <div style="text-align: right;"> <a href="{% url 'loans:loan_application' %}">Apply for a Loan</a></div>
+          {% if request.user.is_authenticated %}
+              {% if not request.user.is_staff %}
+            <section>
+             <h2>Loans to Finance</h2>
+            <ul>
+              {% for loan in loans %}
+                <li>
+                <a href="{% url 'loans:loan_detail' loan.pk %}">
+                        Amount: ${{ loan.amount_requested }} | Status: {{ loan.status }} | Purpose: {{ loan.purpose }}
+                         | Borrower: {{ loan.borrower.username }}
+                    </a>
+                    {% if not loan.lender and loan.status == 'PENDING' %}
+                     <a href="{% url 'loans:approve_loan' application_id=loan.id %}" class="approve-link">Approve Loan</a>
+                     {% endif %}
+                </li>
+              {% empty %}
+                <p class="no-loans">There are currently no available loans.</p>
+              {% endfor %}
+            </ul>
+            </section>
+            {% endif %}
+          {% endif %}
+        <section>
+            <h2>Key Features</h2>
+            <ul>
+              <li><img src="{% static 'icons/apply.png' %}" width="20" height="20"> Quick and easy loan application process.</li>
+              <li><img src="{% static 'icons/lending.png' %}" width="20" height="20"> Flexible Lending: Lenders can choose which loan applications to fund.</li>
+              <li><img src="{% static 'icons/transparency.png' %}" width="20" height="20"> Transparent Transactions: Track all transactions easily on our platform.</li>
+              <li><img src="{% static 'icons/review.png' %}" width="20" height="20"> User Reviews and Ratings: Make informed decisions through user reviews and ratings.</li>
+            </ul>
+        </section>
+    </main>
+{% endblock %}

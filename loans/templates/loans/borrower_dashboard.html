@@ -1,0 +1,45 @@
+{% extends 'basic_generic.html' %}
+{% load static %}
+{% block content %}
+    <h2>Welcome to your Borrower Dashboard</h2>
+    <p>Track and manage your loans below.</p>
+
+    <h3>Your Loan Applications</h3>
+     <p>Here is a list of all the loan applications you have submitted, along with the application status and loan amount.</p>
+    <ul>
+        {% for application in loan_applications %}
+            <li>
+                <a href="{% url 'loans:loan_detail' application.id %}">
+                    Loan ID: {{ application.id }} - Amount: ${{ application.amount_requested }} - Status: {{ application.status }}
+                </a>
+            </li>
+        {% empty %}
+            <li>You have not made any loan applications yet.</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Your Borrowed Loans</h3>
+    <p>Below you will find information on the loans that have been funded, along with the loan status.</p>
+    <ul>
+         {% for loan in borrowed_loans %}
+            <li>
+                 <a href="{% url 'loans:loan_detail' loan.id %}">
+                   Loan ID: {{ loan.id }} - Amount: ${{ loan.amount_requested }} - Status: {{ loan.status }}
+                 </a>
+            </li>
+        {% empty %}
+            <li>No loans borrowed yet.</li>
+        {% endfor %}
+    </ul>
+     <h3>Your Transactions</h3>
+    <p>Below is a history of all loan related transactions.</p>
+    <ul>
+    {% for transaction in borrower_transactions %}
+        <li>
+           Transaction ID: {{ transaction.id }} -  Amount: ${{ transaction.amount }} -  Date: {{ transaction.transaction_date }}  - Loan: {{transaction.loan}} - Repaid: {{transaction.is_repaid}}
+        </li>
+    {% empty %}
+            <li>No transaction made yet.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

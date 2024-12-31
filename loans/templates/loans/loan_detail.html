@@ -1,0 +1,32 @@
+{% extends 'basic_generic.html' %}
+{% load static %}
+{% block content %}
+    <h2>Loan Details</h2>
+    <p><span>Amount:</span> ${{ loan.amount_requested }}</p>
+    <p><span>Status:</span> {{ loan.status }}</p>
+    <p><span>Purpose:</span> {{ loan.purpose }}</p>
+    <p><span>Interest Rate:</span> {{ loan.interest_rate }}%</p>
+     <p><span>Duration:</span> {{ loan.duration_in_months }} months</p>
+    {% if loan.due_date %}
+        <p><span>Due Date:</span> {{ loan.due_date }}</p>
+    {% endif %}
+    
+    {% if loan.collateral %}
+        <p><span>Collateral:</span> {{ loan.collateral }}</p>
+    {% endif %}
+    {% if loan.lender %}
+      <p><span>Lender:</span> {{ loan.lender.username }}</p>
+    {% endif %}
+     {% if loan.borrower %}
+        <p><span>Borrower:</span> {{ loan.borrower.username }}</p>
+     {% endif %}
+    {% if request.user.is_staff or request.user == loan.lender %}
+         <h3>Update Loan Status</h3>
+        <form method="post" onsubmit="return validateForm(this)">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Update Status</button>
+        </form>
+    {% endif %}
+    <p><a href="{% url 'loans:loan_list' %}">Back to Loan List</a></p>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'basic_generic.html' %}
+
+{% block content %}
+  <h2>Loan Approval</h2>
+  <p>Review the loan application and make a decision.</p>
+  <p><span>Borrower:</span> {{ application.borrower.username }}</p>
+  <p><span>Amount Requested:</span> ${{ application.amount_requested }}</p>
+  <p><span>Purpose:</span> {{ application.purpose }}</p>
+  
+  <form method="POST" onsubmit="return validateForm(this)">
+    {% csrf_token %}
+    <label for="status">Select Loan Status:</label>
+    <select name="status" id="status">
+      <option value="APPROVED">Approve</option>
+      <option value="REJECTED">Reject</option>
+    </select>
+    <button type="submit">Submit</button>
+  </form>
+{% endblock %}

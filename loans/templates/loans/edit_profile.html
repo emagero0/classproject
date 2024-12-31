@@ -1,0 +1,59 @@
+{% extends 'basic_generic.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .container-login {
+        width: 300px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+    }
+    
+    .container-login input[type="text"],
+    .container-login input[type="number"],
+    .container-login input[type="email"],
+    .container-login input[type="password"] {
+      width: 100%;
+      padding: 10px;
+       margin-bottom: 10px;
+       border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+     }
+     .container-login button {
+         background-color: #4CAF50;
+         color: white;
+         border: none;
+         padding: 10px 20px;
+         cursor: pointer;
+         border-radius: 4px;
+     }
+
+    .container-login button:hover {
+         background-color: #45a049;
+     }
+</style>
+<div class="container-login">
+    <h2>Edit Profile</h2>
+    <p>Update your profile information below.</p>
+        {% if form.errors %}
+        <ul class="error-list">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm(this)">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

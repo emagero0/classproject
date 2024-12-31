@@ -1,0 +1,64 @@
+{% extends 'basic_generic.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .container-login {
+        width: 300px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+    }
+    
+    .container-login input[type="text"],
+    .container-login textarea,
+    .container-login input[type="number"] {
+      width: 100%;
+      padding: 10px;
+       margin-bottom: 10px;
+       border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+     }
+     .container-login button {
+         background-color: #4CAF50;
+         color: white;
+         border: none;
+         padding: 10px 20px;
+         cursor: pointer;
+         border-radius: 4px;
+     }
+
+    .container-login button:hover {
+        background-color: #45a049;
+    }
+</style>
+<div class="container-login">
+    <h2>Loan Application</h2>
+
+    <!-- Display form errors, if any -->
+    {% if form.errors %}
+        <ul class="error-list">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form method="POST" onsubmit="return validateForm(this)">
+        {% csrf_token %}
+           <p>Please provide the following details to apply for a loan.</p>
+        {{ form.as_p }}  <!-- This renders the form fields in paragraph format -->
+
+        <button type="submit">Submit Application</button>
+    </form>
+
+    <br>
+    <a href="{% url 'loans:loan_list' %}">Back to Loan List</a>
+</div>
+{% endblock %}

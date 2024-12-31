@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        li a {
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+
+        li a:hover {
+            text-decoration: underline;
+        }
+
+        .no-loans {
+            color: #777;
+        }
+
+        p a {
+            text-decoration: none;
+            color: white;
+            background-color: #4CAF50;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+
+        p a:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h2>Your Loans</h2>
+    
+    {% if loans %}
+        <ul>
+            {% for loan in loans %}
+                <li>
+                    <a href="{% url 'loans:loan_detail' loan.pk %}">
+                        Amount: ${{ loan.amount_requested }} | Status: {{ loan.status }} | Purpose: {{ loan.purpose }}
+                        {% if loan.lender %} | Lender: {{ loan.lender.username }}{% endif %}
+                        {% if loan.borrower %} | Borrower: {{ loan.borrower.username }}{% endif %}
+                    </a>
+                     {% if not request.user.is_staff and not loan.lender and loan.status == 'PENDING' %}
+                    <a href="{% url 'loans:approve_loan' application_id=loan.id %}" class="approve-link">Approve Loan</a>
+                {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="no-loans">You currently have no loans.</p>
+    {% endif %}
+
+    <p><a href="{% url 'loans:loan_application' %}">Apply for another loan</a></p>
+</body>
+</html>

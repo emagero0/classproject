@@ -1,0 +1,46 @@
+{% extends 'basic_generic.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .container-login {
+        width: 300px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+    }
+    
+    .container-login input[type="text"],
+    .container-login input[type="email"],
+    .container-login input[type="password"] {
+      width: 100%;
+      padding: 10px;
+       margin-bottom: 10px;
+       border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+     }
+     .container-login button {
+         background-color: #4CAF50;
+         color: white;
+         border: none;
+         padding: 10px 20px;
+         cursor: pointer;
+         border-radius: 4px;
+     }
+
+    .container-login button:hover {
+        background-color: #45a049;
+    }
+</style>
+<div class="container-login">
+<h2>Register</h2>
+<p>Please provide your username, email and password to register.</p>
+<form method="post" onsubmit="return validateForm(this)">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Register</button>
+</form>
+</div>
+{% endblock %}
