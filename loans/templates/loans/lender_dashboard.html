@@ -4,24 +4,10 @@
     <h2>Welcome to your Lender Dashboard</h2>
     <p>View and manage your lending activity below.</p>
 
-    <h3>Pending Loan Applications</h3>
-    <p>Review the list of loan applications waiting for approval. Click on a loan to see more details and make a decision.</p>
-    <ul>
-        {% for application in pending_applications %}
-            <li>
-                <a href="{% url 'loans:approve_loan' application.id %}">
-                    Loan ID: {{ application.id }} - Amount: ${{ application.amount_requested }} - Borrower: {{ application.borrower.username }}
-                </a>
-            </li>
-        {% empty %}
-            <li>No pending applications at the moment.</li>
-        {% endfor %}
-    </ul>
-
     <h3>Your Lent Loans</h3>
      <p>See all the loans that you have lent out, along with information on the loan amount, borrower, and current status.</p>
     <ul>
-        {% for loan in lent_loans %}
+        {% for loan in loans %}
             <li>
                 <a href="{% url 'loans:loan_detail' loan.id %}">
                    Loan ID: {{ loan.id }} - Amount: ${{ loan.amount_requested }} - Borrower: {{ loan.borrower.username }} - Status: {{ loan.status }}
@@ -38,7 +24,7 @@
            Transaction ID: {{ transaction.id }} -  Amount: ${{ transaction.amount }} -  Date: {{ transaction.transaction_date }}  - Loan: {{transaction.loan}} - Repaid: {{transaction.is_repaid}}
         </li>
     {% empty %}
-            <li>No transactions have been made yet.</li>
+            <li>No transactions made yet.</li>
         {% endfor %}
     </ul>
 {% endblock %}

@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import Group
 from django.contrib.auth import login as auth_login, authenticate, logout
-from .models import LoanApplication, Loan, Transaction, Review, LoanStatus, User
+from .models import LoanApplication, Loan, Transaction, Review, LoanStatus, User, ChatMessage
 from .forms import LoanApplicationForm, LoanForm, TransactionForm, ReviewForm, UserRegistrationForm, EditProfileForm, LoanStatusUpdateForm
 from django.contrib.auth.forms import AuthenticationForm
 
@@ -56,7 +56,7 @@ def approve_loan_view(request, application_id):
             application.status = LoanStatus.APPROVED
             application.save()
 
-            return redirect('loans:loan_detail', pk=loan.id)
+            return redirect('loan_detail', pk=loan.id)
     else:
         form = LoanForm(initial={'borrower': application.borrower, 'lender':request.user, 'status': LoanStatus.APPROVED })  # Render the loan form for approval
     return render(request, 'loans/approve_loan.html', {'form': form, 'application': application})
@@ -139,7 +139,7 @@ def login_view(request):
             return redirect('loans:home')  # Redirect to home after login
     else:
          form = AuthenticationForm()
-    return render(request, 'registrations/login.html', {'form': form})
+    return render(request, 'loans/registrations/login.html', {'form': form})
 
 def logout_view(request):
     logout(request)
@@ -170,7 +170,7 @@ def is_borrower(user):
 @user_passes_test(is_lender)
 def lender_dashboard(request):
     # Logic for lender dashboard
-    loans = Loan.objects.filter(status=LoanStatus.PENDING)
+    loans = Loan.objects.filter(lender=request.user, status=LoanStatus.APPROVED)
     lender_transactions = Transaction.objects.filter(lender=request.user)
     return render(request, 'loans/lender_dashboard.html', {'loans': loans,  'lender_transactions':lender_transactions})
 
@@ -192,3 +192,22 @@ def home(request):
     is_lender_user = is_lender(request.user)
     is_borrower_user = is_borrower(request.user)
     return render(request, 'loans/home.html', {'users':users, 'is_lender': is_lender_user, 'is_borrower': is_borrower_user, 'loans':loans})
+
+@login_required
+def chat_view(request, loan_id):
+    loan = get_object_or_404(Loan, pk=loan_id)
+    messages = ChatMessage.objects.filter(loan=loan).order_by('timestamp')
+
+    if request.method == "POST":
+        message = request.POST.get('message')
+        ChatMessage.objects.create(
+            loan = loan,
+            sender=request.user,
+            receiver=loan.lender if request.user == loan.borrower else loan.borrower,
+            message=message,
+        )
+        return redirect('loans:chat', loan_id=loan_id)
+    return render(request, 'loans/chat.html', {
+        'loan': loan,
+        'messages': messages,
+    })

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+from datetime import date, timedelta
 
 # Extended User Model
 class User(AbstractUser):
@@ -57,7 +57,8 @@ class LoanApplication(models.Model):
             interest_rate=5.0,  # Example interest rate
             duration_in_months=self.duration_in_months,
             collateral=self.collateral,
-            status=LoanStatus.APPROVED
+            status=LoanStatus.APPROVED,
+            due_date=date.today() + timedelta(days=30*self.duration_in_months) # Due date based on today's date and the requested duration
         )
         self.status = LoanStatus.APPROVED
         self.save()  # Save the application as approved
@@ -83,6 +84,7 @@ class Loan(models.Model):
     status = models.CharField(max_length=20, choices=LoanStatus.choices, default=LoanStatus.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    due_date = models.DateField() # Added the due_date field
 
     def __str__(self):
         return f"Loan: {self.amount_requested} by {self.borrower.username}"
@@ -122,7 +124,6 @@ class Transaction(models.Model):
             self.loan.status = LoanStatus.COMPLETED
             self.loan.save()
 
-
 # Review Model
 class Review(models.Model):
     reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_given')
@@ -133,3 +134,13 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review: {self.rating} for {self.reviewed_user.username}"
+# Chat Model
+class ChatMessage(models.Model):
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='chat_messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message from {self.sender} to {self.receiver} for {self.loan}"

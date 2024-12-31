@@ -28,5 +28,9 @@
             <button type="submit">Update Status</button>
         </form>
     {% endif %}
+    {% if request.user.is_authenticated and (request.user == loan.lender or request.user == loan.borrower)  %}
+      <br>
+     <a href="{% url 'loans:chat' loan.id %}" class="approve-link">Chat</a>
+    {% endif %}
     <p><a href="{% url 'loans:loan_list' %}">Back to Loan List</a></p>
 {% endblock %}

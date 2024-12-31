@@ -15,6 +15,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('approve/<int:application_id>/', views.approve_loan_view, name='approve_loan'),
     path('transaction/<int:loan_id>/', views.transaction_view, name='transaction'),
+     path('chat/<int:loan_id>/', views.chat_view, name='chat'),  # Chat page for specific loan
     path('review/<int:user_id>/', views.submit_review_view, name='submit_review'),
     path('register/', views.register_view, name='register'),
     path('lender-dashboard/', views.lender_dashboard, name='lender_dashboard'),
