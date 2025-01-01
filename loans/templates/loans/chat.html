@@ -2,36 +2,20 @@
 {% load static %}
 {% block content %}
     <h2>Chat for Loan: {{ loan.id }}</h2>
-        <div style="overflow-y: scroll; height: 300px; border:1px solid #ddd; padding: 10px; margin-bottom:10px;">
-         {% for message in messages %}
-                <p style=" padding: 8px;
-            margin: 5px 0;
-            {% if message.sender == request.user %}
-                 background-color:#b4e1fa;
-                 text-align:right;
-                 border-radius: 8px 15px 15px 8px;
-                 margin-left: auto;
-            {% else %}
-                background-color: #ddd;
-               border-radius: 15px 8px 8px 15px;
-               text-align:left;
-               margin-right:auto;
-            {% endif %}
-            ">{{ message.message }}
-                 <br>
-                    <small>
-                        {{ message.timestamp }}
-                         {% if message.sender == request.user %} (Me) {% else %} ({{ message.sender.username }}) {% endif %}
-                    </small>
-                </p>
-
-            {% endfor %}
-         </div>
-         <form method="post" onsubmit="return validateForm(this)">
-            {% csrf_token %}
-             <div style="display: flex; gap: 10px">
-               <input type="text" name="message" class="form-control" required placeholder="Type your message here">
-               <button type="submit">Send</button>
-              </div>
-        </form>
+    <div class="chat-container">
+        {% for message in messages %}
+            <div class="chat-message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                <p>{{ message.message }}</p>
+                <small>
+                    {{ message.timestamp }}
+                    {% if message.sender == request.user %} (Me) {% else %} ({{ message.sender.username }}) {% endif %}
+                </small>
+            </div>
+        {% endfor %}
+    </div>
+    <form method="post" class="chat-form">
+        {% csrf_token %}
+        <input type="text" name="message" class="form-control" required placeholder="Type your message here">
+        <button type="submit">Send</button>
+    </form>
 {% endblock %}

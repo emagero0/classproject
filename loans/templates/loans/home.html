@@ -8,7 +8,6 @@
         </section>
            <div style="text-align: right;"> <a href="{% url 'loans:loan_application' %}">Apply for a Loan</a></div>
           {% if request.user.is_authenticated %}
-              {% if not request.user.is_staff %}
             <section>
              <h2>Loans to Finance</h2>
             <ul>
@@ -19,7 +18,7 @@
                          | Borrower: {{ loan.borrower.username }}
                     </a>
                     {% if not loan.lender and loan.status == 'PENDING' %}
-                     <a href="{% url 'loans:approve_loan' application_id=loan.id %}" class="approve-link">Approve Loan</a>
+                     <a href="{% url 'loans:approve_loan' application_id=loan.id %}">Approve Loan</a>
                      {% endif %}
                 </li>
               {% empty %}
@@ -27,7 +26,6 @@
               {% endfor %}
             </ul>
             </section>
-            {% endif %}
           {% endif %}
         <section>
             <h2>Key Features</h2>

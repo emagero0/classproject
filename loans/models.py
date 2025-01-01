@@ -72,6 +72,8 @@ class LoanApplication(models.Model):
     def __str__(self):
         return f"Loan Application: {self.amount_requested} by {self.borrower.username}"
 
+def default_loan_due_date():
+    return date.today() + timedelta(days=30)
 
 # Loan Model
 class Loan(models.Model):
@@ -84,7 +86,7 @@ class Loan(models.Model):
     status = models.CharField(max_length=20, choices=LoanStatus.choices, default=LoanStatus.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    due_date = models.DateField() # Added the due_date field
+    due_date = models.DateField(default=default_loan_due_date) # Added the due_date field with a default function
 
     def __str__(self):
         return f"Loan: {self.amount_requested} by {self.borrower.username}"

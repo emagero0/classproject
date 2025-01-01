@@ -39,7 +39,7 @@ def approve_loan_view(request, application_id):
     if application.borrower.loan_applications.filter(status=LoanStatus.APPROVED).count() > 5:  # Borrower exceeds max loans
         return HttpResponse("The borrower has too many loans and is not eligible for this loan.", status=400)
 
-    if application.borrower.loan_applications.filter(status=LoanStatus.REPAID).count() < 3:  # Borrower hasn't repaid enough loans
+    if application.borrower.loan_applications.filter(status=LoanStatus.COMPLETED).count() < 3:  # Borrower hasn't repaid enough loans
         return HttpResponse("The borrower hasn't repaid enough loans to qualify for this loan.", status=400)
 
     if request.method == 'POST':
@@ -56,7 +56,7 @@ def approve_loan_view(request, application_id):
             application.status = LoanStatus.APPROVED
             application.save()
 
-            return redirect('loan_detail', pk=loan.id)
+            return redirect('loans:loan_detail', pk=loan.id)
     else:
         form = LoanForm(initial={'borrower': application.borrower, 'lender':request.user, 'status': LoanStatus.APPROVED })  # Render the loan form for approval
     return render(request, 'loans/approve_loan.html', {'form': form, 'application': application})
@@ -94,7 +94,9 @@ def loan_detail(request, pk):
             return redirect('loans:loan_detail', pk=pk)
     else:
         form = LoanStatusUpdateForm(initial={'status':loan.status})
-    return render(request, 'loans/loan_detail.html', {'loan': loan, 'form':form})
+    is_lender_user = is_lender(request.user)
+    is_borrower_user = is_borrower(request.user)
+    return render(request, 'loans/loan_detail.html', {'loan': loan, 'form':form, 'is_lender': is_lender_user, 'is_borrower':is_borrower_user})
 
 
 # View for Review submission
@@ -106,7 +108,7 @@ def submit_review_view(request, user_id):
             form.save()  # Save the review
             return redirect('loans:home')
     else:
-        form = ReviewForm(initial={'reviewer': request.user.id})  # Set the current user as reviewer
+        form = ReviewForm(initial={'reviewer': request.user.id, 'reviewed_user': user.id})  # Set the current user as reviewer
     return render(request, 'loans/submit_review.html', {'form': form, 'reviewed_user':user})
 
 
@@ -118,17 +120,11 @@ def register_view(request):
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             user.save()
-            role = 'Borrower' #Default role is borrower
-            try:
-                group = Group.objects.get(name=role)
-                user.groups.add(group)
-            except Group.DoesNotExist:
-                return HttpResponse("Invalid role selected.", status=400)
             auth_login(request, user)  # Log the user in immediately after registration
             return redirect('loans:home')  # Redirect to the home page or dashboard
     else:
         form = UserRegistrationForm()
-    return render(request, 'registrations/register.html', {'form': form})
+    return render(request, 'loans/registrations/register.html', {'form': form})
 
 def login_view(request):
     if request.method == 'POST':
@@ -136,10 +132,14 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             auth_login(request, user)
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect('loans:home')  # Redirect to home after login
     else:
          form = AuthenticationForm()
-    return render(request, 'loans/registrations/login.html', {'form': form})
+    next_url = request.META.get('HTTP_REFERER')
+    return render(request, 'loans/registrations/login.html', {'form': form, 'next':next_url})
 
 def logout_view(request):
     logout(request)
@@ -152,8 +152,9 @@ def edit_profile_view(request):
         if form.is_valid():
             form.save()
             return redirect('loans:home')  # Redirect to the home page after editing
-    else:
-        form = EditProfileForm(instance=request.user)
+        else:
+            return render(request, 'loans/edit_profile.html', {'form': form})
+    form = EditProfileForm(instance=request.user)
     return render(request, 'loans/edit_profile.html', {'form': form})
 
 
@@ -172,7 +173,7 @@ def lender_dashboard(request):
     # Logic for lender dashboard
     loans = Loan.objects.filter(lender=request.user, status=LoanStatus.APPROVED)
     lender_transactions = Transaction.objects.filter(lender=request.user)
-    return render(request, 'loans/lender_dashboard.html', {'loans': loans,  'lender_transactions':lender_transactions})
+    return render(request, 'loans/lender_dashboard.html', {'loans': loans,  'lender_transactions':lender_transactions, 'is_lender': True})
 
 
 @login_required
@@ -182,7 +183,7 @@ def borrower_dashboard(request):
     loan_applications = LoanApplication.objects.filter(borrower=request.user)
     borrowed_loans = Loan.objects.filter(borrower=request.user)
     borrower_transactions = Transaction.objects.filter(borrower=request.user)
-    return render(request, 'loans/borrower_dashboard.html', {'loan_applications': loan_applications, 'borrowed_loans': borrowed_loans, 'borrower_transactions': borrower_transactions})
+    return render(request, 'loans/borrower_dashboard.html', {'loan_applications': loan_applications, 'borrowed_loans': borrowed_loans, 'borrower_transactions': borrower_transactions, 'is_borrower': True})
 
 
 # Home View

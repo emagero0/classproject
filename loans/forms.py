@@ -1,5 +1,3 @@
-# loans/forms.py
-
 from django import forms
 from .models import LoanApplication, Loan, Transaction, Review, User, LoanStatus
 from django.contrib.auth.models import Group

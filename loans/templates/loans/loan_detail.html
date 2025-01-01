@@ -1,36 +1,113 @@
 {% extends 'basic_generic.html' %}
 {% load static %}
 {% block content %}
+   <style>
+    .container-login {
+        width: 500px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .container-login input[type="text"],
+    .container-login input[type="number"],
+    .container-login input[type="email"],
+    .container-login select,
+    .container-login input[type="password"] {
+      width: 100%;
+      padding: 10px;
+       margin-bottom: 10px;
+       border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+     }
+     .container-login button {
+         background-color: #4CAF50;
+         color: white;
+         border: none;
+         padding: 10px 20px;
+         cursor: pointer;
+         border-radius: 4px;
+     }
+
+    .container-login button:hover {
+         background-color: #45a049;
+     }
+     .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.detail-table th, .detail-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.detail-table th {
+    background-color: #f2f2f2;
+}
+
+.form-container {
+  margin-top: 20px;
+}
+</style>
+
+<div class="container-login">
     <h2>Loan Details</h2>
-    <p><span>Amount:</span> ${{ loan.amount_requested }}</p>
-    <p><span>Status:</span> {{ loan.status }}</p>
-    <p><span>Purpose:</span> {{ loan.purpose }}</p>
-    <p><span>Interest Rate:</span> {{ loan.interest_rate }}%</p>
-     <p><span>Duration:</span> {{ loan.duration_in_months }} months</p>
-    {% if loan.due_date %}
-        <p><span>Due Date:</span> {{ loan.due_date }}</p>
+    <table class="detail-table">
+        <tr>
+            <th>Borrower</th>
+            <td>{{ loan.borrower.username }}</td>
+        </tr>
+        <tr>
+             <th>Lender</th>
+            <td>{{ loan.lender.username }}</td>
+        </tr>
+        <tr>
+            <th>Amount Requested</th>
+            <td>{{ loan.amount_requested }}</td>
+        </tr>
+         <tr>
+            <th>Interest Rate</th>
+            <td>{{ loan.interest_rate }}</td>
+        </tr>
+         <tr>
+            <th>Duration in Months</th>
+            <td>{{ loan.duration_in_months }}</td>
+        </tr>
+         <tr>
+            <th>Collateral</th>
+            <td>{{ loan.collateral }}</td>
+        </tr>
+          <tr>
+            <th>Status</th>
+            <td>{{ loan.status }}</td>
+        </tr>
+          <tr>
+            <th>Created At</th>
+            <td>{{ loan.created_at }}</td>
+        </tr>
+    </table>
+     {% if is_lender or is_borrower %}
+    <div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+         <button type="submit">Update Status</button>
+    </form>
+        {% if loan.status != 'COMPLETED' %}
+           <a href="{% url 'loans:transaction' loan_id=loan.id %}" class="apply-button">Make Transaction</a>
+            {% endif %}
+     </div>
     {% endif %}
-    
-    {% if loan.collateral %}
-        <p><span>Collateral:</span> {{ loan.collateral }}</p>
+         {% if is_lender or is_borrower %}
+          {% if user.is_authenticated %}
+              <a href="{% url 'loans:chat' loan_id=loan.id %}" class="apply-button">Chat</a>
+          {% endif %}
     {% endif %}
-    {% if loan.lender %}
-      <p><span>Lender:</span> {{ loan.lender.username }}</p>
-    {% endif %}
-     {% if loan.borrower %}
-        <p><span>Borrower:</span> {{ loan.borrower.username }}</p>
-     {% endif %}
-    {% if request.user.is_staff or request.user == loan.lender %}
-         <h3>Update Loan Status</h3>
-        <form method="post" onsubmit="return validateForm(this)">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Update Status</button>
-        </form>
-    {% endif %}
-    {% if request.user.is_authenticated and (request.user == loan.lender or request.user == loan.borrower)  %}
-      <br>
-     <a href="{% url 'loans:chat' loan.id %}" class="approve-link">Chat</a>
-    {% endif %}
-    <p><a href="{% url 'loans:loan_list' %}">Back to Loan List</a></p>
+</div>
 {% endblock %}
