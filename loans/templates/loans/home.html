@@ -6,27 +6,29 @@
             <h2>Connect and Empower: Loans Made Simple</h2>
             <p>Our platform provides a secure and efficient way to apply for loans, track applications, and manage approvals. Whether you're looking to secure funding for your goals or seeking to invest in a reliable lending platform, we are here to help.</p>
         </section>
-           <div style="text-align: right;"> <a href="{% url 'loans:loan_application' %}">Apply for a Loan</a></div>
-          {% if request.user.is_authenticated %}
-            <section>
-             <h2>Loans to Finance</h2>
+           {% if user.is_authenticated  %}
+          <div style="text-align: right;"> <a href="{% url 'loans:loan_application' %}">Apply for a Loan</a></div>
+            {% endif %}
+          {% if user.is_authenticated %}
+             <section>
+             <h2>Available Loan Applications</h2>
             <ul>
               {% for loan in loans %}
                 <li>
-                <a href="{% url 'loans:loan_detail' loan.pk %}">
-                        Amount: ${{ loan.amount_requested }} | Status: {{ loan.status }} | Purpose: {{ loan.purpose }}
-                         | Borrower: {{ loan.borrower.username }}
-                    </a>
-                    {% if not loan.lender and loan.status == 'PENDING' %}
+                  <a href="#" onclick="showLoanDetails('{{ loan.id }}'); return false;">
+                    Borrower: {{ loan.borrower.username }} | Amount: KES {{ loan.amount_requested }} | Status: {{ loan.status }}
+                  </a>
+                     {% if not loan.lender and loan.status == 'PENDING' %}
                      <a href="{% url 'loans:approve_loan' application_id=loan.id %}">Approve Loan</a>
                      {% endif %}
                 </li>
-              {% empty %}
+                {% empty %}
                 <p class="no-loans">There are currently no available loans.</p>
               {% endfor %}
             </ul>
-            </section>
-          {% endif %}
+           </section>
+            {% endif %}
+
         <section>
             <h2>Key Features</h2>
             <ul>
@@ -37,4 +39,45 @@
             </ul>
         </section>
     </main>
+
+    <div id="loanModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">×</span>
+        <div id="loanDetails"></div>
+    </div>
+</div>
+<script>
+    function showLoanDetails(loanId) {
+        fetch(`/loans/loan-details/${loanId}/`)
+        .then(response => response.json())
+        .then(data => {
+                document.getElementById('loanDetails').innerHTML = `
+                   <h2>Loan Application Details</h2>
+                    <p><strong>Borrower:</strong> ${data.borrower.username}</p>
+                    <p><strong>Phone Number:</strong> ${data.borrower.phone_number}</p>
+                     <p><strong>Amount:</strong> KES ${data.amount_requested}</p>
+                    <p><strong>Status:</strong> ${data.status}</p>
+                    <p><strong>Purpose:</strong> ${data.purpose}</p>
+                    <p><strong>Collateral:</strong> ${data.collateral}</p>
+                    <a href="/loans/chat/${data.id}/">Chat</a>
+                `;
+                 document.getElementById('loanModal').style.display = "block";
+
+            })
+            .catch(error => {
+               console.error('Error:', error)
+               document.getElementById('loanDetails').innerHTML = `<p>Failed to load loan details.</p>`
+                document.getElementById('loanModal').style.display = "block";
+            })
+    }
+     function closeModal() {
+      document.getElementById('loanModal').style.display = "none";
+    }
+        window.onclick = function(event) {
+        var modal = document.getElementById('loanModal');
+            if (event.target == modal) {
+               modal.style.display = "none";
+            }
+    }
+</script>
 {% endblock %}

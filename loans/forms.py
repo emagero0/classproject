@@ -1,31 +1,43 @@
+# loans/forms.py
+
 from django import forms
 from .models import LoanApplication, Loan, Transaction, Review, User, LoanStatus
 from django.contrib.auth.models import Group
 
 # Form for LoanApplication
 class LoanApplicationForm(forms.ModelForm):
+    amount_requested = forms.CharField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    duration_in_months = forms.CharField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
     class Meta:
         model = LoanApplication
         fields = ['amount_requested', 'purpose', 'duration_in_months', 'collateral']
         widgets = {
-            'amount_requested': forms.NumberInput(attrs={'class': 'form-control'}),
+            
             'purpose': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'duration_in_months': forms.NumberInput(attrs={'class': 'form-control'}),
+          
             'collateral': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def clean_amount_requested(self):
         amount = self.cleaned_data.get('amount_requested')
+        try:
+            amount = int(amount)
+        except ValueError:
+            raise forms.ValidationError("Amount requested must be a number")
         if amount <= 0:
             raise forms.ValidationError("Amount requested must be greater than zero.")
         return amount
 
     def clean_duration_in_months(self):
         duration = self.cleaned_data.get('duration_in_months')
+        try:
+            duration = int(duration)
+        except ValueError:
+            raise forms.ValidationError("Duration must be a number.")
         if duration <= 0:
             raise forms.ValidationError("Duration must be greater than zero.")
         return duration
-
+    
 # Form for Loan (Used for approving a loan application)
 class LoanForm(forms.ModelForm):
     class Meta:
