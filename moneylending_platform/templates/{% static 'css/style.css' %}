@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Lending Platform{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> 
+     <script>
+        function validateForm(form) {
+            const formElements = form.elements;
+            let isValid = true;
+            for (let i = 0; i < formElements.length; i++) {
+                const element = formElements[i];
+                 if (element.type !== 'submit' && element.type !== 'hidden' && element.type !== 'checkbox') {
+                    if (!element.checkValidity()) {
+                        isValid = false;
+                        element.style.borderColor = 'red';
+                        if (element.nextElementSibling && element.nextElementSibling.classList.contains('error-message')){
+                            element.nextElementSibling.textContent = element.validationMessage;
+                        } else {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.textContent = element.validationMessage;
+                            errorDiv.classList.add('error-message');
+                            errorDiv.style.color = 'red';
+                            element.parentNode.insertBefore(errorDiv, element.nextSibling);
+                        }
+                    } else {
+                       element.style.borderColor = '';
+                        if (element.nextElementSibling && element.nextElementSibling.classList.contains('error-message')) {
+                            element.nextElementSibling.textContent = '';
+                        }
+                     }
+                }
+            }
+            return isValid;
+        }
+    </script>
+         <script>
+            document.addEventListener('DOMContentLoaded', function(){
+                 document.body.classList.remove('loading')
+                 const loader = document.getElementById('loadingCircle');
+                if (loader){
+                    loader.style.display = 'none';
+                }
+            })
+             document.addEventListener('beforeunload', function(){
+                document.body.classList.add('loading')
+                 const loader = document.getElementById('loadingCircle');
+                 if (loader){
+                    loader.style.display = 'block';
+                }
+            })
+        </script>
+            <script>
+                function showConfirmation(message) {
+                  if (message) {
+                        alert(message);
+                      }
+                 }
+            </script>
+</head>
+<body onload="showConfirmation('{{ message }}')" class="container loading">
+    <header>
+         <h1 style="display: inline-block;">My Lending Platform</h1>
+        <nav class="navigation-right">
+            <ul>
+                 {% if user.is_authenticated %}
+                <li>
+                    {% if request.path ==  url 'loans:loan_list'  or  request.path == url 'loans:home' %}
+                         <a href="{% url 'loans:loan_application' %}" style="background-color:#4CAF50; color: white;"  >Apply for a Loan</a>
+                    {% else %}
+                        <a href="{% url 'loans:loan_application' %}" >Apply for a Loan</a>
+                     {% endif %}
+                  </li>
+                 {% if is_lender %}
+                   
+                    <li>
+                      {% if request.path == url 'loans:lender_dashboard' %}
+                        <a href="{% url 'loans:lender_dashboard' %}" style="background-color:#4CAF50; color: white;">Lender Dashboard</a>
+                     {% else %}
+                        <a href="{% url 'loans:lender_dashboard' %}">Lender Dashboard</a>
+                       {% endif %}
+                    </li>
+                  {% endif %}
+                 {% if is_borrower %}
+                     <li>
+                        {% if request.path == url 'loans:borrower_dashboard' %}
+                         <a href="{% url 'loans:borrower_dashboard' %}" style="background-color:#4CAF50; color: white;">Borrower Dashboard</a>
+                       {% else %}
+                         <a href="{% url 'loans:borrower_dashboard' %}">Borrower Dashboard</a>
+                       {% endif %}
+                    </li>
+                 {% endif %}
+                    <li><a href="{% url 'loans:logout' %}">Logout</a></li>
+                {% else %}
+                <li>
+                 {% if request.path == url 'loans:login' %}
+                   <a href="{% url 'loans:login' %}" style="background-color:#4CAF50; color: white;">Login</a>
+                    {% else %}
+                      <a href="{% url 'loans:login' %}">Login</a>
+                      {% endif %}
+                 </li>
+                <li><a href="{% url 'loans:register' %}">Register</a></li>
+                 {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+          <div class="loader" id="loadingCircle"></div>
+        {% block content %}
+            <p>Welcome! This is the default content area. Please add content in your specific page template.</p>
+        {% endblock %}
+    </main>
+
+    <footer>
+        <!-- Common footer content -->
+        <p>© 2024 My Lending Platform. All rights reserved.</p>
+    </footer>
+</body>
+</html>

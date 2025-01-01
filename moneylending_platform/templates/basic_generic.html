@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Lending Platform{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> 
+     <script>
+        function validateForm(form) {
+            const formElements = form.elements;
+            let isValid = true;
+            for (let i = 0; i < formElements.length; i++) {
+                const element = formElements[i];
+                 if (element.type !== 'submit' && element.type !== 'hidden' && element.type !== 'checkbox') {
+                    if (!element.checkValidity()) {
+                        isValid = false;
+                        element.style.borderColor = 'red';
+                        if (element.nextElementSibling && element.nextElementSibling.classList.contains('error-message')){
+                            element.nextElementSibling.textContent = element.validationMessage;
+                        } else {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.textContent = element.validationMessage;
+                            errorDiv.classList.add('error-message');
+                            errorDiv.style.color = 'red';
+                            element.parentNode.insertBefore(errorDiv, element.nextSibling);
+                        }
+                    } else {
+                       element.style.borderColor = '';
+                        if (element.nextElementSibling && element.nextElementSibling.classList.contains('error-message')) {
+                            element.nextElementSibling.textContent = '';
+                        }
+                     }
+                }
+            }
+            return isValid;
+        }
+    </script>
+         <script>
+            document.addEventListener('DOMContentLoaded', function(){
+                 document.body.classList.remove('loading')
+                 const loader = document.getElementById('loadingCircle');
+                if (loader){
+                    loader.style.display = 'none';
+                }
+            })
+             document.addEventListener('beforeunload', function(){
+                document.body.classList.add('loading')
+                 const loader = document.getElementById('loadingCircle');
+                 if (loader){
+                    loader.style.display = 'block';
+                }
+            })
+        </script>
+            <script>
+                function showConfirmation(message) {
+                  if (message) {
+                        alert(message);
+                      }
+                 }
+            </script>
+</head>
+<body onload="showConfirmation('{{ message }}')" class="container">
+    <header>
+         <h1 style="display: inline-block;">My Lending Platform</h1>
+        <nav class="navigation-right">
+            <ul>
+                <li>
+                    {% if user.is_authenticated %}
+                    <div class="dropdown">
+                    <button class="dropbtn" >Profile</button>
+                    <div class="dropdown-content">
+                        <a href="{% url 'loans:edit_profile' %}">Edit Profile</a>
+                        <a href="{% url 'loans:logout' %}">Logout</a>
+                    </div>
+                    </div>
+                {% else %}
+                  <div class="dropdown">
+                        <button class="dropbtn" >Account</button>
+                        <div class="dropdown-content">
+                        <a href="{% url 'loans:login' %}?next={{request.path}}">Login</a>
+                        <a href="{% url 'loans:register' %}">Register</a>
+                        </div>
+                    </div>
+
+                 {% endif %}
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+          <div class="loader" id="loadingCircle" style="display:none;"></div>
+        {% block content %}
+            <p>Welcome! This is the default content area. Please add content in your specific page template.</p>
+        {% endblock %}
+    </main>
+
+    <footer>
+        <!-- Common footer content -->
+        <p>© 2024 My Lending Platform. All rights reserved.</p>
+    </footer>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
