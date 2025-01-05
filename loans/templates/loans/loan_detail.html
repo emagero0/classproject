@@ -1,61 +1,7 @@
 {% extends 'basic_generic.html' %}
 {% load static %}
 {% block content %}
-   <style>
-    .container-login {
-        width: 500px;
-        margin: 50px auto;
-        padding: 20px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: white;
-    }
-
-    .container-login input[type="text"],
-    .container-login input[type="number"],
-    .container-login input[type="email"],
-    .container-login select,
-    .container-login input[type="password"] {
-      width: 100%;
-      padding: 10px;
-       margin-bottom: 10px;
-       border: 1px solid #ddd;
-        border-radius: 4px;
-        box-sizing: border-box;
-     }
-     .container-login button {
-         background-color: #4CAF50;
-         color: white;
-         border: none;
-         padding: 10px 20px;
-         cursor: pointer;
-         border-radius: 4px;
-     }
-
-    .container-login button:hover {
-         background-color: #45a049;
-     }
-     .detail-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-.detail-table th, .detail-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-.detail-table th {
-    background-color: #f2f2f2;
-}
-
-.form-container {
-  margin-top: 20px;
-}
-</style>
-
+   <link rel="stylesheet" href="{% static 'css/loan_detail.css' %}">
 <div class="container-login">
     <h2>Loan Details</h2>
     <table class="detail-table">
@@ -65,7 +11,7 @@
         </tr>
         <tr>
              <th>Lender</th>
-            <td>{{ loan.lender.username }}</td>
+            <td>{% if loan.lender %}{{ loan.lender.username }}{% else %} No lender yet {% endif %}</td>
         </tr>
         <tr>
             <th>Amount Requested</th>
@@ -92,22 +38,32 @@
             <td>{{ loan.created_at }}</td>
         </tr>
     </table>
-     {% if is_lender or is_borrower %}
+   
     <div class="form-container">
+     {% if  loan.lender == request.user or loan.borrower == request.user %}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
          <button type="submit">Update Status</button>
     </form>
-        {% if loan.status != 'COMPLETED' %}
+         {% if loan.status != 'COMPLETED' %}
            <a href="{% url 'loans:transaction' loan_id=loan.id %}" class="apply-button">Make Transaction</a>
             {% endif %}
+           {% endif %}
      </div>
-    {% endif %}
-         {% if is_lender or is_borrower %}
-          {% if user.is_authenticated %}
+         {% if user.is_authenticated %}
               <a href="{% url 'loans:chat' loan_id=loan.id %}" class="apply-button">Chat</a>
           {% endif %}
-    {% endif %}
+            {% if not request.user.is_staff and not loan.lender and loan.status == 'PENDING' %}
+             <form method="post">
+                {% csrf_token %}
+             <label for="status">Select Loan Status:</label>
+                <select name="status" id="status">
+                  <option value="APPROVED">Approve</option>
+                   <option value="REJECTED">Reject</option>
+                  </select>
+             <button type="submit">Submit</button>
+                </form>
+             {% endif %}
 </div>
 {% endblock %}

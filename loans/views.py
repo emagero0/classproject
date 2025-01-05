@@ -5,6 +5,7 @@ from django.contrib.auth import login as auth_login, authenticate, logout
 from .models import LoanApplication, Loan, Transaction, Review, LoanStatus, User, ChatMessage
 from .forms import LoanApplicationForm, LoanForm, TransactionForm, ReviewForm, UserRegistrationForm, EditProfileForm, LoanStatusUpdateForm
 from django.contrib.auth.forms import AuthenticationForm
+from django.db.models import Sum
 
 
 # View for Loan Application
@@ -182,21 +183,12 @@ def edit_profile_view(request):
     return render(request, 'loans/edit_profile.html', {'form': form})
 
 
-# Role Checks
-def is_lender(user):
-   return False
-
-
-def is_borrower(user):
-   return False
-
-
 @login_required
-def lender_dashboard(request):
+def loan_list(request):
     # Logic for lender dashboard
-    loans = Loan.objects.filter(lender=request.user, status=LoanStatus.APPROVED)
+    loans = Loan.objects.all()
     lender_transactions = Transaction.objects.filter(lender=request.user)
-    return render(request, 'loans/lender_dashboard.html', {'loans': loans,  'lender_transactions':lender_transactions})
+    return render(request, 'loans/loan_list.html', {'loans': loans,  'lender_transactions':lender_transactions})
 
 
 @login_required
@@ -211,8 +203,34 @@ def borrower_dashboard(request):
 # Home View
 def home(request):
     loan_applications = LoanApplication.objects.filter(status=LoanStatus.PENDING)
-    users = User.objects.all()
-    return render(request, 'loans/home.html', {'users':users, 'loans':loan_applications})
+    if request.user.is_authenticated:
+         # Borrower Dashboard data
+        borrower_applications = LoanApplication.objects.filter(borrower=request.user)
+        borrowed_loans = Loan.objects.filter(borrower=request.user, status=LoanStatus.APPROVED)
+        approved_loan_applications = LoanApplication.objects.filter(borrower=request.user, status=LoanStatus.APPROVED)
+        total_amount_owed = Loan.objects.filter(borrower=request.user, status=LoanStatus.APPROVED).aggregate(total=Sum('amount_requested'))['total'] or 0
+
+         #Lender Dashboard Data
+        active_loans = Loan.objects.filter(lender=request.user, status=LoanStatus.APPROVED)
+        total_lent_amount = Loan.objects.filter(lender=request.user, status=LoanStatus.APPROVED).aggregate(total=Sum('amount_requested'))['total'] or 0
+
+        recent_transactions = (Transaction.objects.filter(borrower=request.user).order_by('-transaction_date')[:5] | Transaction.objects.filter(lender=request.user).order_by('-transaction_date')[:5]).distinct()
+        recent_messages = ChatMessage.objects.filter(receiver=request.user).order_by('-timestamp')[:5]
+
+        return render(request, 'loans/home.html', {
+                'loans': loan_applications,
+                'loan_applications': borrower_applications,
+                'approved_loan_applications': approved_loan_applications,
+                'borrowed_loans': borrowed_loans,
+                'total_amount_owed': total_amount_owed,
+               'active_loans': active_loans,
+                'total_lent_amount': total_lent_amount,
+                'recent_transactions': recent_transactions,
+                 'recent_messages': recent_messages,
+           })
+    else:
+        return render(request, 'loans/home.html', {'loans': loan_applications})
+    return render(request, 'loans/home.html', {'loans': loan_applications})
 
 @login_required
 def chat_view(request, loan_id):

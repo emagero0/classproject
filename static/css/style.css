@@ -45,6 +45,12 @@ header {
     justify-content: space-between;
     align-items: center;
 }
+.header-container{
+    background-color: #0056b3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
 header h1 {
     margin-left: 20px; /* Space out the logo */
@@ -64,17 +70,17 @@ nav.navigation-right ul li {
     position: relative; /*  allow for absolute positioning of dropdown menu */
 }
 
-nav.navigation-right ul li a {
+header .navigation-right ul li a {
     color: #fff;
     transition: color 0.3s ease;
 }
 
-nav.navigation-right ul li a:hover {
+header .navigation-right ul li a:hover {
     text-decoration: underline;
      color: #add8e6;
 }
 .dropbtn {
-  background-color: #001f3f; /* Navy blue button */
+    background-color: #001f3f; /* Navy blue button */
     color: white;
     padding: 10px 15px;
     font-size: 16px;
@@ -84,6 +90,19 @@ nav.navigation-right ul li a:hover {
     text-decoration: none;
 }
 .dropbtn:hover {
+  color:#add8e6;
+}
+.authbtn {
+    background-color: #001f3f; /* Navy blue button */
+    color: white;
+    padding: 10px 15px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    text-decoration: none;
+}
+.authbtn:hover {
   color:#add8e6;
 }
 
@@ -97,7 +116,22 @@ nav.navigation-right ul li a:hover {
 .dropdown-content {
     display: none;
     position: absolute;
-    background-color: #f9f9f9;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 4px;
+    right: 0;
+    top: 100%;
+}
+.auth-dropdown{
+  position: relative;
+    display: inline-block;
+}
+.auth-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
@@ -112,16 +146,28 @@ nav.navigation-right ul li a:hover {
     text-decoration: none;
     display: block;
 }
+.auth-dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
 
 
 .dropdown-content a:hover {
     background-color: #f1f1f1;
 }
-
+.auth-dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
 
 .dropdown:hover .dropdown-content {
     display: block;
 }
+.auth-dropdown:hover .auth-dropdown-content {
+    display: block;
+}
+
 
 /* Form styles */
 .form-control {
@@ -227,3 +273,33 @@ form button:hover {
 .loading {
     opacity: 0.5;
 }
+    .container-login {
+        width: 300px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        text-align: center;
+    }
+    
+    .container-login img {
+       border-radius: 50%;
+        width: 150px;
+        height: 150px;
+         margin-bottom: 15px;
+       object-fit: cover;
+      
+     }
+       .container-login input[type="text"],
+    .container-login input[type="number"],
+    .container-login input[type="email"],
+      .container-login input[type="password"] ,
+       .container-login textarea {
+        width: 100%;
+         padding: 10px;
+          margin-bottom: 10px;
+         border: 1px solid #ddd;
+          border-radius: 4px;
+          box-sizing: border-box;
+      }

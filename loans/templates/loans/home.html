@@ -1,83 +1,101 @@
 {% extends 'basic_generic.html' %}
 {% load static %}
+
 {% block content %}
-    <main>
-        <section>
-            <h2>Connect and Empower: Loans Made Simple</h2>
-            <p>Our platform provides a secure and efficient way to apply for loans, track applications, and manage approvals. Whether you're looking to secure funding for your goals or seeking to invest in a reliable lending platform, we are here to help.</p>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <main class="home-main">
+        <section class="dashboard-header">
+            <h2 class="welcome-message">Welcome, {% if user.is_authenticated %}{{ user.username }}{% else %} Guest {% endif %}!</h2>
+            <div class="quick-actions">
+                {% if user.is_authenticated %}
+                <a href="{% url 'loans:loan_application' %}" class="apply-button">Apply for a Loan</a>
+                {% endif %}
+                  <a href="{% url 'loans:loan_list' %}" class="browse-button">Browse Loan Requests</a>
+               {% if user.is_authenticated %}
+                 <a href="{% url 'loans:loan_list' %}" class="transaction-button">My Dashboard</a>
+                {% endif %}
+            </div>
         </section>
-           {% if user.is_authenticated  %}
-          <div style="text-align: right;"> <a href="{% url 'loans:loan_application' %}">Apply for a Loan</a></div>
-            {% endif %}
-          {% if user.is_authenticated %}
-             <section>
-             <h2>Available Loan Applications</h2>
-            <ul>
-              {% for loan in loans %}
-                <li>
-                  <a href="#" onclick="showLoanDetails('{{ loan.id }}'); return false;">
-                    Borrower: {{ loan.borrower.username }} | Amount: KES {{ loan.amount_requested }} | Status: {{ loan.status }}
-                  </a>
-                     {% if not loan.lender and loan.status == 'PENDING' %}
-                     <a href="{% url 'loans:approve_loan' application_id=loan.id %}">Approve Loan</a>
-                     {% endif %}
-                </li>
-                {% empty %}
-                <p class="no-loans">There are currently no available loans.</p>
-              {% endfor %}
-            </ul>
-           </section>
-            {% endif %}
 
-        <section>
-            <h2>Key Features</h2>
-            <ul>
-              <li><img src="{% static 'icons/apply.png' %}" width="20" height="20"> Quick and easy loan application process.</li>
-              <li><img src="{% static 'icons/lending.png' %}" width="20" height="20"> Flexible Lending: Lenders can choose which loan applications to fund.</li>
-              <li><img src="{% static 'icons/transparency.png' %}" width="20" height="20"> Transparent Transactions: Track all transactions easily on our platform.</li>
-              <li><img src="{% static 'icons/review.png' %}" width="20" height="20"> User Reviews and Ratings: Make informed decisions through user reviews and ratings.</li>
+        <section class="dashboard-summary">
+           {% if user.is_authenticated %}
+                <div class="summary-card">
+                   <h3 class="card-title">My Loan Applications</h3>
+                    <p>Total applications: {{ loan_applications.count }}</p>
+                    <p>Approved applications: {{ approved_loan_applications.count }}</p>
+                  <a href="{% url 'loans:borrower_dashboard' %}" class="dashboard-button">View Details</a>
+                </div>
+
+               <div class="summary-card">
+                    <h3 class="card-title">Outstanding Loans</h3>
+                     <p>Total borrowed loans: {{ borrowed_loans.count }}</p>
+                       <p>Total amount owed: KES {{ total_amount_owed }}</p>
+                      <a href="{% url 'loans:borrower_dashboard' %}" class="dashboard-button">View Details</a>
+               </div>
+                <div class="summary-card">
+                  <h3 class="card-title">My Active Loans</h3>
+                   <p>Total lent amount: KES {{ total_lent_amount }}</p>
+                  <p>Number of active loans: {{ active_loans.count }}</p>
+                      <a href="{% url 'loans:loan_list' %}" class="dashboard-button">View Details</a>
+                  </div>
+          {% endif %}
+        </section>
+          <section class="recent-activity-section">
+                <h2 class="recent-activity-title">Recent Activity</h2>
+                 <ul class="activity-list">
+                  {% if not recent_transactions and not recent_messages %}
+                    <p class="no-activity">No recent activity yet</p>
+                   {% else %}
+                   {% for message in recent_messages %}
+                      <li class="activity-item">
+                        <p>New Message from {{message.sender}}</p>
+                      </li>
+                   {% endfor %}
+                   {% for transaction in recent_transactions %}
+                     <li class="activity-item">
+                        <p>New Transaction of KES {{transaction.amount}} - loan id {{transaction.loan.id}}</p>
+                     </li>
+                   {% endfor %}
+                  {% endif %}
+                </ul>
+            </section>
+        {% if user.is_authenticated %}
+           <section class="available-loans-section">
+                <h2 class="available-loans-title">Available Loan Applications</h2>
+               <div class="loan-card-list">
+                  {% for loan in loans %}
+                   <div class="loan-card">
+                      <a href="#" onclick="showLoanDetails('{{ loan.id }}'); return false;">
+                         <h3 class="loan-card-title">Borrower: {{ loan.borrower.username }}</h3>
+                         <p>Amount: KES {{ loan.amount_requested }}</p>
+                      </a>
+                      {% if not loan.lender and loan.status == 'PENDING' %}
+                         <a href="{% url 'loans:loan_detail' pk=loan.id %}" class="view-link">View Loan</a>
+                      {% endif %}
+                   </div>
+                  {% empty %}
+                     <p class="no-loans">There are currently no available loans.</p>
+                  {% endfor %}
+               </div>
+            </section>
+         {% endif %}
+        <section class="features-section">
+            <h2 class="features-title">Key Features</h2>
+            <ul class="features-list">
+              <li class="feature-item"><img src="{% static 'icons/apply.png' %}" width="20" height="20" class="feature-icon"> Quick and easy loan application process.</li>
+              <li class="feature-item"><img src="{% static 'icons/lending.png' %}" width="20" height="20" class="feature-icon"> Flexible Lending: Lenders can choose which loan applications to fund.</li>
+              <li class="feature-item"><img src="{% static 'icons/transparency.png' %}" width="20" height="20" class="feature-icon"> Transparent Transactions: Track all transactions easily on our platform.</li>
+              <li class="feature-item"><img src="{% static 'icons/review.png' %}" width="20" height="20" class="feature-icon"> User Reviews and Ratings: Make informed decisions through user reviews and ratings.</li>
             </ul>
         </section>
-    </main>
 
-    <div id="loanModal" class="modal" style="display: none;">
-    <div class="modal-content">
+    <!-- The Modal -->
+    <div id="loanModal" class="modal">
+      <div class="modal-content">
         <span class="close" onclick="closeModal()">×</span>
         <div id="loanDetails"></div>
+      </div>
     </div>
-</div>
-<script>
-    function showLoanDetails(loanId) {
-        fetch(`/loans/loan-details/${loanId}/`)
-        .then(response => response.json())
-        .then(data => {
-                document.getElementById('loanDetails').innerHTML = `
-                   <h2>Loan Application Details</h2>
-                    <p><strong>Borrower:</strong> ${data.borrower.username}</p>
-                    <p><strong>Phone Number:</strong> ${data.borrower.phone_number}</p>
-                     <p><strong>Amount:</strong> KES ${data.amount_requested}</p>
-                    <p><strong>Status:</strong> ${data.status}</p>
-                    <p><strong>Purpose:</strong> ${data.purpose}</p>
-                    <p><strong>Collateral:</strong> ${data.collateral}</p>
-                    <a href="/loans/chat/${data.id}/">Chat</a>
-                `;
-                 document.getElementById('loanModal').style.display = "block";
-
-            })
-            .catch(error => {
-               console.error('Error:', error)
-               document.getElementById('loanDetails').innerHTML = `<p>Failed to load loan details.</p>`
-                document.getElementById('loanModal').style.display = "block";
-            })
-    }
-     function closeModal() {
-      document.getElementById('loanModal').style.display = "none";
-    }
-        window.onclick = function(event) {
-        var modal = document.getElementById('loanModal');
-            if (event.target == modal) {
-               modal.style.display = "none";
-            }
-    }
-</script>
+    </main>
+     <script src="{% static 'js/home.js' %}"></script>
 {% endblock %}
