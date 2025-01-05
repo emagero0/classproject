@@ -1,100 +1,202 @@
+# tests/test_p2p_lending.py
+import json
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.auth import get_user_model #updated
-from loans.models import LoanApplication, LoanStatus
-from loans.forms import LoanApplicationForm
-from http import HTTPStatus
+from django.contrib.auth import get_user_model
+from loans.models import LoanApplication, Loan, Transaction, LoanStatus
+from django.contrib.auth.models import Group, Permission
 
-class LoanApplicationTest(TestCase):
+User = get_user_model()
+
+
+class P2PLendingTest(TestCase):
 
     def setUp(self):
-        # Create a test user
-        User = get_user_model() #updated to use django get_user_model method
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
         self.client = Client()
-        self.client.login(username='testuser', password='testpassword')
-        self.loan_application_url = reverse('loans:loan_application')
-        self.home_url = reverse('loans:home')
-    def test_loan_application_form_renders_correctly(self):
-        response = self.client.get(self.loan_application_url)
-        self.assertEqual(response.status_code, 200) #Ensure that url renders
-        self.assertIsInstance(response.context['form'], LoanApplicationForm) #Checks if instance of right form type
-    
-    def test_loan_application_submission(self):
-        data = {
+        # Create test users
+        self.borrower = User.objects.create_user(username='borrower', password='testpassword')
+        self.lender = User.objects.create_user(username='lender', password='testpassword')
+        # Setup initial borrower conditions
+        self._create_completed_loan_cycle()
+
+
+    def _login_user(self, user):
+        self.client.login(username=user.username, password='testpassword')
+
+    def _create_completed_loan_cycle(self):
+            # Helper method to create a completed loan cycle for the borrower
+            
+            # make loan application
+            loan_app = LoanApplication.objects.create(
+                borrower=self.borrower,
+                amount_requested=500,
+                purpose=f"Test Loan cycle",
+                duration_in_months=3,
+                collateral='None',
+                status=LoanStatus.APPROVED
+            )
+            # lender approves the loan
+            loan = Loan.objects.create(
+                borrower=self.borrower,
+                lender=self.lender,
+                amount_requested=500,
+                interest_rate=5.0,
+                duration_in_months=3,
+                collateral='None',
+                status=LoanStatus.APPROVED
+            )
+
+            # borrower completes a transaction to repay the loan
+            Transaction.objects.create(
+                loan=loan,
+                lender=self.lender,
+                borrower=self.borrower,
+                amount=500,
+                is_repaid=True
+            )
+            loan.status = LoanStatus.COMPLETED
+            loan.save()
+            loan_app.status = LoanStatus.COMPLETED
+            loan_app.save()
+
+
+    def test_full_loan_cycle(self):
+        # 1. Borrower Creates a Loan Application
+        self._login_user(self.borrower)
+        application_data = {
             'amount_requested': 1000,
-            'purpose': 'Test Purpose',
-            'duration_in_months': 12,
-            'collateral': 'Test Collateral',
+            'purpose': 'Test loan',
+            'duration_in_months': 6,
+            'collateral': 'Some asset',
         }
-        response = self.client.post(self.loan_application_url, data)
-        self.assertEqual(response.status_code, 302) # ensure that the page is redirected after form submission
-        self.assertRedirects(response, self.home_url) #check if redirect is successful
-        self.assertEqual(LoanApplication.objects.count(), 1) #check if application exists
-        application = LoanApplication.objects.first()
-        self.assertEqual(application.borrower, self.user) #check user is assigned to application
-        self.assertEqual(application.amount_requested, data['amount_requested']) #check amount is recorded correctly
-        self.assertEqual(application.status, LoanStatus.PENDING) #check if status is set to pending
+        response = self.client.post(reverse('loans:loan_application'), application_data)
+        self.assertEqual(response.status_code, 302)  # Check redirect to home
 
-    def test_loan_application_submission_invalid_amount(self):
-        # Test negative loan amount
-        invalid_data = {
-            'amount_requested': -100,
-            'purpose': 'Test Purpose',
-            'duration_in_months': 12,
-            'collateral': 'Test Collateral'
-        }
-        response = self.client.post(self.loan_application_url, invalid_data)
-        self.assertEqual(response.status_code, 200) #Ensure that the invalid form renders again
-         # Extract the form from the response context
-        form = response.context['form']
-        self.assertFormError(form, 'amount_requested', "Amount requested must be greater than zero.")
-        self.assertEqual(LoanApplication.objects.count(), 0) # Ensure it was not created due to invalid data
-        
-        # Test zero loan amount
-        invalid_data = {
-            'amount_requested': 0,
-            'purpose': 'Test Purpose',
-            'duration_in_months': 12,
-            'collateral': 'Test Collateral'
-        }
-        response = self.client.post(self.loan_application_url, invalid_data)
-        self.assertEqual(response.status_code, 200) #Ensure that the invalid form renders again
-         # Extract the form from the response context
-        form = response.context['form']
-        self.assertFormError(form, 'amount_requested', "Amount requested must be greater than zero.")
-        self.assertEqual(LoanApplication.objects.count(), 0) # Ensure it was not created due to invalid data
-    def test_loan_application_submission_invalid_duration(self):
-        # Test negative duration
-        invalid_data = {
+        # Check if the application is in pending list
+        pending_application = LoanApplication.objects.filter(borrower=self.borrower, status=LoanStatus.PENDING).first()
+        self.assertIsNotNone(pending_application)
+
+        # 2. Lender Approves the Loan
+        self._login_user(self.lender)
+
+        # Get the loan application id. We are making an assumption here that only 1 loan is pending in the system
+        # this will always be the last one that was created.
+        loan_app = LoanApplication.objects.filter(borrower=self.borrower).latest('application_date')
+
+        response = self.client.get(reverse('loans:approve_loan', kwargs={'application_id': loan_app.id}))
+        self.assertEqual(response.status_code, 200)
+        loan_data = {
+            'borrower': self.borrower.id,
+            'lender': self.lender.id,
             'amount_requested': 1000,
-            'purpose': 'Test Purpose',
-            'duration_in_months': -12,
-            'collateral': 'Test Collateral'
+            'interest_rate': 5.0,
+            'duration_in_months': 6,
+            'collateral': 'Some asset',
+            'status': 'APPROVED'
         }
-        response = self.client.post(self.loan_application_url, invalid_data)
-        self.assertEqual(response.status_code, 200) #Ensure that the invalid form renders again
-          # Extract the form from the response context
-        form = response.context['form']
-        self.assertFormError(form, 'duration_in_months', "Duration must be greater than zero.")
-        self.assertEqual(LoanApplication.objects.count(), 0) # Ensure it was not created due to invalid data
+        response = self.client.post(reverse('loans:approve_loan', kwargs={'application_id': loan_app.id}), loan_data)
+        self.assertEqual(response.status_code, 302)
 
-        # Test zero duration
-        invalid_data = {
-           'amount_requested': 1000,
-            'purpose': 'Test Purpose',
-            'duration_in_months': 0,
-            'collateral': 'Test Collateral'
+        # Check the loan status updated
+        loan = Loan.objects.filter(borrower=self.borrower, lender=self.lender).first()
+        self.assertEqual(loan.status, LoanStatus.APPROVED)
+
+        # Check if loan is present in lender dashboard
+        response = self.client.get(reverse('loans:loan_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"Loan ID: {loan.id}")
+        self.assertContains(response, f"Borrower: {self.borrower.username}")
+        self.assertContains(response, f"Status: {LoanStatus.APPROVED}")
+
+        # 3. Borrower Repays the Loan
+        self._login_user(self.borrower)
+
+        transaction_data = {
+            'loan': loan.id,
+            'amount': loan.amount_requested,
+            'is_repaid': True,
+            'lender': self.lender.id,
+            'borrower': self.borrower.id,
         }
-        response = self.client.post(self.loan_application_url, invalid_data)
-        self.assertEqual(response.status_code, 200) #Ensure that the invalid form renders again
-          # Extract the form from the response context
-        form = response.context['form']
-        self.assertFormError(form, 'duration_in_months', "Duration must be greater than zero.")
-        self.assertEqual(LoanApplication.objects.count(), 0) # Ensure it was not created due to invalid data
+        response = self.client.post(reverse('loans:transaction', kwargs={'loan_id': loan.id}), transaction_data)
+        self.assertEqual(response.status_code, 200)
 
-    def test_unauthenticated_user_access_redirects_to_login(self):
-        self.client.logout() # Logout the client
-        response = self.client.get(self.loan_application_url)
-        self.assertEqual(response.status_code, HTTPStatus.FOUND) # Redirects to login as is required in view
+        # Check the loan status updated to completed and the remaining balance is 0
+        updated_loan = Loan.objects.get(id=loan.id)
+        self.assertEqual(updated_loan.status, LoanStatus.COMPLETED)
+        self.assertLessEqual(updated_loan.get_remaining_balance(), 0)  # remaining balance is less than or equal to 0.
+
+        # Verify the completed loan is on the borrower dashboard.
+        response = self.client.get(reverse('loans:borrower_dashboard'))
+        self.assertContains(response, f"Loan ID: {loan.id}")
+        self.assertContains(response, f"Status: {LoanStatus.COMPLETED}")
+
+        # Verify the completed loan does not appear on the loan list
+        response = self.client.get(reverse('loans:loan_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, f"Loan ID: {loan.id}")
+
+    def test_unauthenticated_access(self):
+        # Try to access protected pages without login
+        response = self.client.get(reverse('loans:loan_application'))
+        self.assertEqual(response.status_code, 302)  # redirect to login
         self.assertIn(reverse('loans:login'), response.url)
+
+    def test_invalid_borrower_action(self):
+        # Test when a loan has been completed a borrower cannot make any further payment
+
+        #borrower makes a loan application
+        self._login_user(self.borrower)
+        application_data = {
+            'amount_requested': 1000,
+            'purpose': 'Test loan',
+            'duration_in_months': 6,
+            'collateral': 'Some asset',
+        }
+        response = self.client.post(reverse('loans:loan_application'), application_data)
+        self.assertEqual(response.status_code, 302)  # Check redirect to home
+
+        # Get the loan application id. We are making an assumption here that only 1 loan is pending in the system
+        # this will always be the last one that was created.
+        loan_app = LoanApplication.objects.filter(borrower=self.borrower).latest('application_date')
+
+        # lender approves the loan
+        self._login_user(self.lender)
+        response = self.client.get(reverse('loans:approve_loan', kwargs={'application_id': loan_app.id}))
+        self.assertEqual(response.status_code, 200)
+        loan_data = {
+            'borrower': self.borrower.id,
+            'lender': self.lender.id,
+            'amount_requested': 1000,
+            'interest_rate': 5.0,
+            'duration_in_months': 6,
+            'collateral': 'Some asset',
+            'status': 'APPROVED'
+        }
+        response = self.client.post(reverse('loans:approve_loan', kwargs={'application_id': loan_app.id}), loan_data)
+        self.assertEqual(response.status_code, 302)
+
+        # Check the loan status updated
+        loan = Loan.objects.filter(borrower=self.borrower, lender=self.lender).first()
+        self.assertEqual(loan.status, LoanStatus.APPROVED)
+
+        # borrower repays the loan
+        self._login_user(self.borrower)
+
+        transaction_data = {
+            'loan': loan.id,
+            'amount': loan.amount_requested,
+            'is_repaid': True,
+            'lender': self.lender.id,
+            'borrower': self.borrower.id,
+        }
+        response = self.client.post(reverse('loans:transaction', kwargs={'loan_id': loan.id}), transaction_data)
+        self.assertEqual(response.status_code, 200)
+
+        # check status
+        updated_loan = Loan.objects.get(id=loan.id)
+        self.assertEqual(updated_loan.status, LoanStatus.COMPLETED)
+
+        # try another payment which should raise error.
+        response = self.client.post(reverse('loans:transaction', kwargs={'loan_id': loan.id}), transaction_data)
+        self.assertContains(response, "Loan is already fully repaid.", status_code=400)

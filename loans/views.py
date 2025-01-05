@@ -3,7 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login, authenticate, logout
 from .models import LoanApplication, Loan, Transaction, Review, LoanStatus, User, ChatMessage
-from .forms import LoanApplicationForm, LoanForm, TransactionForm, ReviewForm, UserRegistrationForm, EditProfileForm, LoanStatusUpdateForm
+from .forms import ApplicationForm, LoanForm, TransactionForm, ReviewForm, UserRegistrationForm, EditProfileForm, LoanStatusUpdateForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Sum
 
@@ -12,7 +12,7 @@ from django.db.models import Sum
 @login_required
 def loan_application_view(request):
     if request.method == 'POST':
-        form = LoanApplicationForm(request.POST)
+        form = ApplicationForm(request.POST)
         if form.is_valid():
             loan_application = form.save(commit=False)
             loan_application.borrower = request.user  # Set the current logged-in user as the borrower
@@ -21,7 +21,7 @@ def loan_application_view(request):
         else:
             return render(request, 'loans/loan_application.html', {'form':form})
     else:
-        form = LoanApplicationForm()
+        form = ApplicationForm()
     return render(request, 'loans/loan_application.html', {'form': form})
 
 
@@ -94,32 +94,54 @@ def transaction_view(request, loan_id):
 
 @login_required
 def loan_detail(request, pk):
-    loan = get_object_or_404(Loan, pk=pk)
+    try:
+         loan = get_object_or_404(Loan, pk=pk)
+    except:
+          loan = get_object_or_404(LoanApplication, pk=pk)
+          try:
+              loan = get_object_or_404(Loan, borrower=loan.borrower, amount_requested=loan.amount_requested, duration_in_months=loan.duration_in_months, collateral=loan.collateral)
+          except:
+              pass
     if request.method == 'POST':
-        form = LoanStatusUpdateForm(request.POST)
-        if form.is_valid():
-            loan.status = form.cleaned_data['status']
-            loan.save()
-            return redirect('loans:loan_detail', pk=pk)
+         form = LoanStatusUpdateForm(request.POST)
+         if form.is_valid():
+             loan.status = form.cleaned_data['status']
+             loan.save()
+             return redirect('loans:loan_detail', pk=pk)
     else:
-        form = LoanStatusUpdateForm(initial={'status':loan.status})
+         form = LoanStatusUpdateForm(initial={'status':loan.status})
     return render(request, 'loans/loan_detail.html', {'loan': loan, 'form':form})
 
 @login_required
 def loan_detail_json(request, loan_id):
-    loan = get_object_or_404(LoanApplication, pk=loan_id)
-    borrower = loan.borrower
-    data = {
-        'id': loan.id,
-        'borrower': {
-            'username': borrower.username,
-            'phone_number': borrower.phone_number,
-        },
-        'amount_requested': str(loan.amount_requested),
-        'purpose': loan.purpose,
-        'collateral': loan.collateral,
-        'status': loan.status,
-    }
+    loan_application = get_object_or_404(LoanApplication, pk=loan_id)
+    borrower = loan_application.borrower
+    try:
+          loan = get_object_or_404(Loan, borrower=borrower, amount_requested=loan_application.amount_requested, duration_in_months=loan_application.duration_in_months, collateral=loan_application.collateral)
+          data = {
+            'id': loan_application.id,
+            'loan_id': loan.id,
+            'borrower': {
+                'username': borrower.username,
+                'phone_number': borrower.phone_number,
+            },
+            'amount_requested': str(loan_application.amount_requested),
+            'purpose': loan_application.purpose,
+            'collateral': loan_application.collateral,
+            'status': loan_application.status,
+        }
+    except:
+        data = {
+            'id': loan_application.id,
+            'borrower': {
+                'username': borrower.username,
+                'phone_number': borrower.phone_number,
+            },
+            'amount_requested': str(loan_application.amount_requested),
+            'purpose': loan_application.purpose,
+            'collateral': loan_application.collateral,
+            'status': loan_application.status,
+        }
     return JsonResponse(data)
 
 
@@ -234,7 +256,11 @@ def home(request):
 
 @login_required
 def chat_view(request, loan_id):
-    loan = get_object_or_404(Loan, pk=loan_id)
+    try:
+         loan = get_object_or_404(Loan, pk=loan_id)
+    except:
+          loan_application = get_object_or_404(LoanApplication, pk=loan_id)
+          loan = get_object_or_404(Loan, borrower=loan_application.borrower, amount_requested=loan_application.amount_requested, duration_in_months=loan_application.duration_in_months, collateral=loan_application.collateral)
     messages = ChatMessage.objects.filter(loan=loan).order_by('timestamp')
 
     if request.method == "POST":
@@ -245,7 +271,7 @@ def chat_view(request, loan_id):
             receiver=loan.lender if request.user == loan.borrower else loan.borrower,
             message=message,
         )
-        return redirect('loans:chat', loan_id=loan_id)
+        return redirect('loans:chat', loan_id=loan.id)
     return render(request, 'loans/chat.html', {
         'loan': loan,
         'messages': messages,

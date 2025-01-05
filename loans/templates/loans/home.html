@@ -63,16 +63,28 @@
            <section class="available-loans-section">
                 <h2 class="available-loans-title">Available Loan Applications</h2>
                <div class="loan-card-list">
-                  {% for loan in loans %}
-                   <div class="loan-card">
-                      <a href="#" onclick="showLoanDetails('{{ loan.id }}'); return false;">
-                         <h3 class="loan-card-title">Borrower: {{ loan.borrower.username }}</h3>
-                         <p>Amount: KES {{ loan.amount_requested }}</p>
+                  {% for loan_application in loans %}
+                   {% if loan_application.loan %}
+                         <div class="loan-card">
+                      <a href="#" onclick="showLoanDetails('{{ loan_application.loan.id }}'); return false;">
+                         <h3 class="loan-card-title">Borrower: {{ loan_application.borrower.username }}</h3>
+                         <p>Amount: KES {{ loan_application.amount_requested }}</p>
                       </a>
-                      {% if not loan.lender and loan.status == 'PENDING' %}
-                         <a href="{% url 'loans:loan_detail' pk=loan.id %}" class="view-link">View Loan</a>
+                      {% if not loan_application.loan.lender and loan_application.status == 'PENDING' %}
+                        <a href="{% url 'loans:loan_detail' pk=loan_application.loan.id %}" class="view-link">View Loan</a>
                       {% endif %}
                    </div>
+                    {% else %}
+                  <div class="loan-card">
+                      <a href="#" onclick="showLoanDetails('{{ loan_application.id }}'); return false;">
+                         <h3 class="loan-card-title">Borrower: {{ loan_application.borrower.username }}</h3>
+                         <p>Amount: KES {{ loan_application.amount_requested }}</p>
+                      </a>
+                       {% if not loan_application.lender and loan_application.status == 'PENDING' %}
+                        <a href="{% url 'loans:loan_detail' pk=loan_application.id %}" class="view-link">View Loan</a>
+                      {% endif %}
+                  </div>
+                  {% endif %}
                   {% empty %}
                      <p class="no-loans">There are currently no available loans.</p>
                   {% endfor %}

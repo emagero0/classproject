@@ -10,6 +10,7 @@ urlpatterns = [
     path('apply/', views.loan_application_view, name='loan_application'),  # Loan application page
     path('list/', views.loan_list, name='loan_list'),  # List all loans
     path('loan/detail/<int:pk>/', views.loan_detail, name='loan_detail'),  # View details of a specific loan
+    path('application/detail/<int:pk>/', views.loan_detail, name='application_detail'), #View details of a loan applicaation
     path('approve/<int:application_id>/', views.approve_loan_view, name='approve_loan'), # Approve or reject a loan
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),

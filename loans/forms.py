@@ -5,7 +5,7 @@ from .models import LoanApplication, Loan, Transaction, Review, User, LoanStatus
 from django.contrib.auth.models import Group
 
 # Form for LoanApplication
-class LoanApplicationForm(forms.ModelForm):
+class ApplicationForm(forms.ModelForm):
     amount_requested = forms.CharField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
     duration_in_months = forms.CharField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
     class Meta:

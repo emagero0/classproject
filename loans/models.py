@@ -93,9 +93,13 @@ class Loan(models.Model):
 
     def get_remaining_balance(self):
         """Calculate the remaining balance of the loan."""
-        repayments = self.repayments.all()
-        total_repaid = sum([repayment.amount_paid for repayment in repayments])
-        return self.amount_requested + (self.amount_requested * self.interest_rate / 100) - total_repaid
+        try:
+            repayment = self.transaction #access the related transaction directly using the related name
+        except Transaction.DoesNotExist:
+            return float(self.amount_requested) + (float(self.amount_requested) * self.interest_rate / 100)
+        
+        total_repaid = repayment.amount
+        return float(self.amount_requested) + (float(self.amount_requested) * self.interest_rate / 100) - total_repaid
 
     def is_completed(self):
         """Check if the loan is fully repaid."""

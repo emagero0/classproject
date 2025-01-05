@@ -1,12 +1,11 @@
- # test_runner.py
-
+# moneylending_platform/test_runner.py
+from django.conf import settings
 from django.test.runner import DiscoverRunner
+from loans.models import LoanApplication, Loan, Transaction, Review, LoanStatus, ChatMessage
+
 
 class CustomTestRunner(DiscoverRunner):
-    def setup_test_environment(self, **kwargs):
-        super().setup_test_environment(**kwargs)
-        from django.conf import settings
-        from django.contrib.auth import get_user_model
-        # Ensure that our custom user model is used when testing
-        if settings.AUTH_USER_MODEL != 'auth.User':
-             settings.AUTH_USER_MODEL = get_user_model()._meta.label
+    def setup_databases(self, **kwargs):
+        result = super().setup_databases(**kwargs)
+        #Add logic here to setup a shared test data as fixture.
+        return result
