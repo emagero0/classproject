@@ -13,21 +13,23 @@
         <div class="container header-container">
             <h1><a href="{% url 'loans:home' %}" style="color:white; margin-left: 0">P2P Loans</a></h1>
             <nav class="navigation-right">
-                <ul>
+                 <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+                <ul id="main-menu" class="desktop-menu">
                     <li><a href="{% url 'loans:home' %}">Home</a></li>
                     <li><a href="{% url 'loans:loan_list' %}">Browse Loans</a></li>
                     {% if user.is_authenticated %}
                         <li><a href="{% url 'loans:loan_application' %}">Apply for Loan</a></li>
-                        <li><a href="{% url 'loans:loan_list' %}">My Dashboard</a></li>
-                        <li class="dropdown">
+                        <li><a href="{% url 'loans:profile' %}">My Dashboard</a></li>
+                        <li class="dropdown desktop-dropdown">
                             <a href="javascript:void(0)" class="dropbtn">{{ user.username }}</a>
                             <div class="dropdown-content">
                                 <a href="{% url 'loans:edit_profile' %}">Edit Profile</a>
                                 <a href="{% url 'loans:logout' %}">Logout</a>
                             </div>
                         </li>
+
                     {% else %}
-                        <li class="auth-dropdown">
+                        <li class="auth-dropdown mobile-dropdown">
                              <a href="javascript:void(0)" class="authbtn">Login/Register</a>
                             <div class="auth-dropdown-content">
                                 <a href="{% url 'loans:login' %}">Login</a>

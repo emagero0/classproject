@@ -20,5 +20,6 @@ urlpatterns = [
     path('review/<int:user_id>/', views.submit_review_view, name='submit_review'),
     path('register/', views.register_view, name='register'),
     path('borrower-dashboard/', views.borrower_dashboard, name='borrower_dashboard'),
-    path('profile/', views.edit_profile_view, name='edit_profile'),
+    path('profile/', views.profile_view, name='profile'), # User Profile page
+    path('edit-profile/', views.edit_profile_view, name='edit_profile'),
 ]

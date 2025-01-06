@@ -32,6 +32,11 @@
     .container-login button:hover {
         background-color: #45a049;
     }
+    .container-login .register-link {
+            display: block;
+            margin-top: 10px;
+            text-align: center;
+        }
 </style>
 <div class="container-login">
 <h2>Login</h2>
@@ -41,5 +46,8 @@
     {{ form.as_p }}
     <button type="submit">Login</button>
 </form>
+    <p class="register-link">
+        <a href="{% url 'loans:register' %}">Create new user</a>
+    </p>
 </div>
 {% endblock %}

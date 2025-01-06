@@ -12,7 +12,7 @@
                 {% endif %}
                   <a href="{% url 'loans:loan_list' %}" class="browse-button">Browse Loan Requests</a>
                {% if user.is_authenticated %}
-                 <a href="{% url 'loans:loan_list' %}" class="transaction-button">My Dashboard</a>
+                 <a href="{% url 'loans:profile' %}" class="transaction-button">My Dashboard</a>
                 {% endif %}
             </div>
         </section>
@@ -110,4 +110,4 @@
     </div>
     </main>
      <script src="{% static 'js/home.js' %}"></script>
-{% endblock %}
+{% endblock %}    

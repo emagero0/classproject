@@ -129,3 +129,7 @@ class EditProfileForm(forms.ModelForm):
 #Form for updating loan status
 class LoanStatusUpdateForm(forms.Form):
     status = forms.ChoiceField(choices=LoanStatus.choices, widget=forms.Select(attrs={'class':'form-control'}))
+
+#Form for displaying profile
+class ProfileForm(forms.Form):
+  pass

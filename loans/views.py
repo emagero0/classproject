@@ -3,7 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login, authenticate, logout
 from .models import LoanApplication, Loan, Transaction, Review, LoanStatus, User, ChatMessage
-from .forms import ApplicationForm, LoanForm, TransactionForm, ReviewForm, UserRegistrationForm, EditProfileForm, LoanStatusUpdateForm
+from .forms import ApplicationForm, LoanForm, TransactionForm, ReviewForm, UserRegistrationForm, EditProfileForm, LoanStatusUpdateForm, ProfileForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Sum
 
@@ -203,6 +203,11 @@ def edit_profile_view(request):
             return render(request, 'loans/edit_profile.html', {'form': form})
     form = EditProfileForm(instance=request.user)
     return render(request, 'loans/edit_profile.html', {'form': form})
+
+@login_required
+def profile_view(request):
+    form = ProfileForm()
+    return render(request, 'loans/profile.html', {'form': form})
 
 
 @login_required
